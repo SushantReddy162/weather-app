@@ -2,15 +2,19 @@ import React, { useState, useEffect } from 'react';
 import './WeatherDashboard.css';
 
 function WeatherDashboard() {
-  const [city, setCity] = useState('');
+  const [city, setCity] = useState('Mumbai');
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
+  const [favorites, setFavorites] = useState([]);
 
   const API_KEY = 'af8da42b3cc7c1f436d841afead0fe94';
+
   useEffect(() => {
     fetchWeather(city);
+    const savedFavorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    setFavorites(savedFavorites);
   }, [city]);
 
   const fetchWeather = async (city) => {
@@ -76,6 +80,20 @@ function WeatherDashboard() {
     return '❄️'; // Cold
   };
 
+  const addFavorite = (city) => {
+    if (!favorites.includes(city)) {
+      const newFavorites = [...favorites, city];
+      setFavorites(newFavorites);
+      localStorage.setItem('favorites', JSON.stringify(newFavorites));
+    }
+  };
+
+  const removeFavorite = (city) => {
+    const newFavorites = favorites.filter((fav) => fav !== city);
+    setFavorites(newFavorites);
+    localStorage.setItem('favorites', JSON.stringify(newFavorites));
+  };
+
   return (
     <div className="weather-dashboard">
       <h1>Weather Dashboard</h1>
@@ -100,9 +118,24 @@ function WeatherDashboard() {
           <p>Condition: {weather.weather[0].description}</p>
           <p>Humidity: {weather.main.humidity}%</p>
           <p>Wind Speed: {weather.wind.speed} m/s</p>
+          <button onClick={() => addFavorite(weather.name)}>Add to Favorites</button>
         </div>
       ) : (
         <p>No weather data available</p>
+      )}
+      {favorites.length > 0 && (
+        <div className="favorites">
+          <h2>Favorite Cities</h2>
+          <ul>
+            {favorites.map((fav) => (
+              <li key={fav}>
+                {fav}
+                <button onClick={() => fetchWeather(fav)}>Get Weather</button>
+                <button onClick={() => removeFavorite(fav)}>Remove</button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
